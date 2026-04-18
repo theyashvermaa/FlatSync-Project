@@ -1,9 +1,10 @@
-// src/pages/Home.jsx
+// src/pages/Home.jsx — featured listings + UI 
 // UPDATED: Added Featured Listings section below How It Works
 // - Shows top 6 listings fetched from backend (public, no login needed)
 // - Horizontal scroll with Show More → redirects to /find
 // - View Profile opens ProfileModal
 // - Post Listing requires login
+
 import React from "react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";

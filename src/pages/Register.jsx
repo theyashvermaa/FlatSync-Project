@@ -1,7 +1,7 @@
 // src/pages/Register.jsx
 // FIXED:
 //   - Removed unreachable JSX block that appeared after the return statement
-//   - Location (lat/lng) from MapPicker is now included in the register API call
+//   - Location (Name) from MapPicker is now included in the register API call
 //   - MapPicker has its own "Use My Location" button — no duplication needed here
 
 import React from "react";

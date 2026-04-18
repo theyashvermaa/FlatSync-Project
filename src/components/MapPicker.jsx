@@ -1,4 +1,4 @@
-// src/components/MapPicker.jsx
+// src/components/MapPicker.jsx — map integration 
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import { useState, useEffect } from "react";
 import L from "leaflet";

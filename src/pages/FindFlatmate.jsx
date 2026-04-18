@@ -1,4 +1,4 @@
-// src/pages/FindFlatmate.jsx
+// src/pages/FindFlatmate.jsx — map integration
 // MAP FEATURES:
 //   1. Type a location → press Enter or "Go" → map flies there, saves to history
 //   2. Click anywhere on map → reverse geocodes to get place name, saves to history
