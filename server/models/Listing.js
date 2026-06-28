@@ -14,6 +14,8 @@ const listingSchema = new mongoose.Schema({
   restrictions: { type: String },
   flatmatePreferences: { type: String },
   vacancyCount: { type: Number, enum: [1, 2, 3], required: true },
+  rentAmount: { type: Number },
+  moveInDate: { type: Date },
   location: {
     type: {
       type: String,

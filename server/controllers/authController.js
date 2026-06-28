@@ -61,7 +61,11 @@ const submitOnboarding = async (req, res) => {
       guestFrequency, 
       noiseTolerance, 
       sharingExpenses, 
-      lifestylePersonality 
+      lifestylePersonality,
+      userType,
+      address,
+      lat,
+      lng
     } = req.body;
     
     const user = await User.findById(req.user._id);
@@ -79,14 +83,18 @@ const submitOnboarding = async (req, res) => {
       sharingExpenses,
       lifestylePersonality
     };
+    if (userType) user.userType = Number(userType);
+    if (address) user.address = address;
+    if (lat && lng) {
+      user.location = {
+        type: 'Point',
+        coordinates: [parseFloat(lng), parseFloat(lat)]
+      };
+    }
     user.onboardingComplete = true;
     const updatedUser = await user.save();
     
-    res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      onboardingComplete: updatedUser.onboardingComplete
-    });
+    res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

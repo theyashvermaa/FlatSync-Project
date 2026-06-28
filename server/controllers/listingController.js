@@ -5,7 +5,8 @@ const createListing = async (req, res) => {
   try {
     const { 
       fullName, email, mobileNumber, address, age, aboutYourself, vacancyCount, 
-      nearbyPlaces, facilities, restrictions, flatmatePreferences, lat, lng 
+      nearbyPlaces, facilities, restrictions, flatmatePreferences, lat, lng,
+      rentAmount, moveInDate
     } = req.body;
     let photoUrls = [];
 
@@ -29,6 +30,8 @@ const createListing = async (req, res) => {
       restrictions,
       flatmatePreferences,
       vacancyCount,
+      rentAmount: rentAmount ? Number(rentAmount) : undefined,
+      moveInDate: moveInDate || undefined,
       location: {
         type: 'Point',
         coordinates: [parseFloat(lng), parseFloat(lat)]
@@ -99,7 +102,8 @@ const updateListing = async (req, res) => {
 
     const { 
       fullName, email, mobileNumber, address, age, aboutYourself, vacancyCount,
-      nearbyPlaces, facilities, restrictions, flatmatePreferences, lat, lng 
+      nearbyPlaces, facilities, restrictions, flatmatePreferences, lat, lng,
+      rentAmount, moveInDate
     } = req.body;
     
     if (req.files && req.files.length > 0) {
@@ -119,6 +123,8 @@ const updateListing = async (req, res) => {
     listing.restrictions = restrictions || listing.restrictions;
     listing.flatmatePreferences = flatmatePreferences || listing.flatmatePreferences;
     listing.vacancyCount = vacancyCount || listing.vacancyCount;
+    if (rentAmount !== undefined) listing.rentAmount = Number(rentAmount);
+    if (moveInDate !== undefined) listing.moveInDate = moveInDate;
     
     if (lat && lng) {
       listing.location = {

@@ -22,9 +22,16 @@ const userSchema = new mongoose.Schema({
     sharingExpenses: { type: String, enum: ['Strictly divided', 'Flexible sharing', 'I prefer someone else to manage', 'Discuss and decide'] },
     lifestylePersonality: { type: String, enum: ['Social & outgoing', 'Balanced', 'Private & reserved'] }
   },
+  userType: { type: Number, enum: [1, 2] },
+  location: {
+    type: { type: String, enum: ['Point'], default: 'Point' },
+    coordinates: { type: [Number], default: [77.2090, 28.6139] }
+  },
   onboardingComplete: { type: Boolean, default: false },
   savedListings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Listing' }]
 }, { timestamps: true });
+
+userSchema.index({ location: '2dsphere' });
 
 userSchema.pre('save', async function() {
   if (!this.isModified('password')) return;
