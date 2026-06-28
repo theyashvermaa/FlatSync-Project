@@ -32,11 +32,10 @@ const ChatInput = ({ onSend }) => {
         <button
           onClick={handleSend}
           disabled={!text.trim()}
-          className={`p-2 rounded-full transition-all ${
-            text.trim()
+          className={`p-2 rounded-full transition-all ${text.trim()
               ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
               : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-          }`}
+            }`}
         >
           <Send size={16} />
         </button>

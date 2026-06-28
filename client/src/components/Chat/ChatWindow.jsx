@@ -37,9 +37,9 @@ const ChatWindow = ({ messages, currentUserId, onDelete }) => {
           ? msg.senderId._id.toString()
           : msg.senderId?.toString();
 
-        const isMine     = senderId === currentUserId?.toString();
+        const isMine = senderId === currentUserId?.toString();
         const senderPhoto = msg.senderId?.photoUrl;
-        const senderName  = msg.senderId?.name;
+        const senderName = msg.senderId?.name;
         const time = new Date(msg.createdAt).toLocaleTimeString([], {
           hour: '2-digit', minute: '2-digit',
         });
@@ -90,11 +90,10 @@ const ChatWindow = ({ messages, currentUserId, onDelete }) => {
               )}
 
               {/* Bubble */}
-              <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
-                isMine
+              <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${isMine
                   ? 'bg-emerald-600 text-white rounded-br-sm'
                   : 'bg-gray-800 text-gray-100 rounded-bl-sm'
-              }`}>
+                }`}>
                 {msg.text}
               </div>
 

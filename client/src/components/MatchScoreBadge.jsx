@@ -3,10 +3,10 @@ import { matchScoreCache } from '../utils/matchScoreCache';
 
 // ─── Colour helpers ────────────────────────────────────────────────────────────
 const getColors = (pct) => {
-  if (pct === null) return { stroke: '#9ca3af', ring: 'border-gray-200', bg: 'bg-gray-50', text: 'text-gray-500', badgeCls: 'bg-gray-100 text-gray-600' };
-  if (pct >= 71) return { stroke: '#10b981', ring: 'border-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-600', badgeCls: 'bg-emerald-100 text-emerald-700' };
-  if (pct >= 41) return { stroke: '#f59e0b', ring: 'border-amber-200',   bg: 'bg-amber-50',   text: 'text-amber-600',   badgeCls: 'bg-amber-100  text-amber-700'  };
-  return             { stroke: '#ef4444', ring: 'border-rose-200',   bg: 'bg-rose-50',   text: 'text-rose-500',   badgeCls: 'bg-rose-100   text-rose-700'   };
+  if (pct === null) return { stroke: 'var(--color-match-unknown)', ring: 'border-gray-200', bg: 'bg-gray-50', text: 'text-gray-500', badgeCls: 'bg-gray-100 text-gray-600' };
+  if (pct >= 71) return { stroke: 'var(--color-match-high)', ring: 'border-emerald-200', bg: 'bg-emerald-50', text: 'text-emerald-600', badgeCls: 'bg-emerald-100 text-emerald-700' };
+  if (pct >= 41) return { stroke: 'var(--color-match-medium)', ring: 'border-amber-200',   bg: 'bg-amber-50',   text: 'text-amber-600',   badgeCls: 'bg-amber-100  text-amber-700'  };
+  return             { stroke: 'var(--color-match-low)', ring: 'border-rose-200',   bg: 'bg-rose-50',   text: 'text-rose-500',   badgeCls: 'bg-rose-100   text-rose-700'   };
 };
 
 const getLabel = (pct) => {

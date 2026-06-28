@@ -42,9 +42,9 @@ export const SocketProvider = ({ children }) => {
           toast(`💬 ${data.senderName}: ${data.text}`, {
             duration: 4000,
             style: {
-              background: '#1f2937',
-              color: '#fff',
-              border: '1px solid #10b981',
+              background: 'var(--color-card)',
+              color: 'var(--color-text)',
+              border: '1px solid var(--color-accent)',
             },
           });
           setMsgNotifications(prev => [...prev, data]);

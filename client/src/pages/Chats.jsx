@@ -86,12 +86,12 @@ const Chats = () => {
       setOnlineUsers(prev => prev.filter(id => id !== offlineUserId));
     };
     //duplicate messages 
-     const handleMessage = (newMsg) => {
-     setMessages(prev => {
-    if (prev.some(m => m._id === newMsg._id)) return prev;
-    return [...prev, newMsg];
-     });
-       socket.emit('mark_seen', { roomId, readerId: user._id });
+    const handleMessage = (newMsg) => {
+      setMessages(prev => {
+        if (prev.some(m => m._id === newMsg._id)) return prev;
+        return [...prev, newMsg];
+      });
+      socket.emit('mark_seen', { roomId, readerId: user._id });
     };
 
     const handleSeen = ({ readerId }) => {
@@ -111,11 +111,11 @@ const Chats = () => {
     };
 
     socket.on('online_users_list', handleOnlineList);
-    socket.on('user_online',       handleUserOnline);
-    socket.on('user_offline',      handleUserOffline);
-    socket.on('receive_message',   handleMessage);
-    socket.on('messages_seen',     handleSeen);
-    socket.on('message_deleted',   handleDeleted);
+    socket.on('user_online', handleUserOnline);
+    socket.on('user_offline', handleUserOffline);
+    socket.on('receive_message', handleMessage);
+    socket.on('messages_seen', handleSeen);
+    socket.on('message_deleted', handleDeleted);
 
     socket.emit('join_room', roomId);
     socket.emit('mark_seen', { roomId, readerId: user._id });
@@ -133,11 +133,11 @@ const Chats = () => {
 
     return () => {
       socket.off('online_users_list', handleOnlineList);
-      socket.off('user_online',       handleUserOnline);
-      socket.off('user_offline',      handleUserOffline);
-      socket.off('receive_message',   handleMessage);
-      socket.off('messages_seen',     handleSeen);
-      socket.off('message_deleted',   handleDeleted);
+      socket.off('user_online', handleUserOnline);
+      socket.off('user_offline', handleUserOffline);
+      socket.off('receive_message', handleMessage);
+      socket.off('messages_seen', handleSeen);
+      socket.off('message_deleted', handleDeleted);
     };
   }, [socket, user, roomId, receiverId]);
 
@@ -149,9 +149,9 @@ const Chats = () => {
     if (!text.trim() || !socket || !user || !receiverId) return;
     socket.emit('send_message', {
       roomId,
-      senderId:   user._id,
+      senderId: user._id,
       receiverId,
-      text:       text.trim(),
+      text: text.trim(),
     });
   };
 
@@ -161,8 +161,8 @@ const Chats = () => {
   };
 
   const isReceiverOnline = onlineUsers?.some(
-  id => id.toString() === receiverId?.toString()
-);
+    id => id.toString() === receiverId?.toString()
+  );
 
   if (!user) {
     return (
@@ -182,7 +182,7 @@ const Chats = () => {
             Messages
           </h2>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {loadingConnections ? (
             <div className="flex justify-center p-4">
@@ -197,8 +197,8 @@ const Chats = () => {
             connections.map(contact => {
               const isActive = contact._id === receiverId;
               const isOnline = onlineUsers?.some(        // prevent online crash 
-                 id => id.toString() === contact._id.toString()
-               );
+                id => id.toString() === contact._id.toString()
+              );
               // Check if there's an unread notification for this user
               const hasUnread = msgNotifications.some(n => n.senderId === contact._id);
 
@@ -206,11 +206,10 @@ const Chats = () => {
                 <Link
                   key={contact._id}
                   to={`/chats/${contact._id}`}
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-                    isActive 
-                      ? 'bg-primary-50 border border-primary-100 shadow-sm' 
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${isActive
+                      ? 'bg-primary-50 border border-primary-100 shadow-sm'
                       : 'hover:bg-white hover:shadow-sm border border-transparent'
-                  }`}
+                    }`}
                 >
                   <div className="relative">
                     {contact.photoUrl ? (
