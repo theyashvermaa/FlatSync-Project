@@ -57,14 +57,8 @@ const updateUserProfile = async (req, res) => {
     // Invalidate cached match scores so stale data is not served
     await MatchScore.deleteMany({ $or: [{ user1: updatedUser._id }, { user2: updatedUser._id }] });
 
-    res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      photoUrl: updatedUser.photoUrl,
-      preferences: updatedUser.preferences,
-      onboardingComplete: updatedUser.onboardingComplete
-    });
+    const returnedUser = await User.findById(updatedUser._id).select('-password');
+    res.json(returnedUser);
   } catch (error) {
     console.error('Profile Update Error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

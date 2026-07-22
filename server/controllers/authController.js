@@ -12,13 +12,10 @@ const registerUser = async (req, res) => {
     if (userExists) return res.status(400).json({ message: 'User already exists' });
     
     const user = await User.create({ name, email, password });
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      onboardingComplete: user.onboardingComplete,
-      token: generateToken(user._id)
-    });
+    const userObj = user.toObject();
+    delete userObj.password;
+    userObj.token = generateToken(user._id);
+    res.status(201).json(userObj);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -34,13 +31,10 @@ const loginUser = async (req, res) => {
     }
     
     if (await user.matchPassword(password)) {
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        onboardingComplete: user.onboardingComplete,
-        token: generateToken(user._id)
-      });
+      const userObj = user.toObject();
+      delete userObj.password;
+      userObj.token = generateToken(user._id);
+      res.json(userObj);
     } else {
       res.status(401).json({ message: 'Invalid password' });
     }

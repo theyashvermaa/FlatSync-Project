@@ -15,7 +15,7 @@ export const SocketProvider = ({ children }) => {
     if (isAuthenticated && user) {
 
       // ✅ Fixed to connect to backend server on port 5000
-      const newSocket = io('http://localhost:5001', {
+      const newSocket = io('http://localhost:5000', {
         query: { userId: user._id },
         withCredentials: true,
         transports: ['websocket', 'polling'],

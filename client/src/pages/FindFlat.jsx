@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from '@react-google-maps/api';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { useLocation } from 'react-router-dom';
 import api from '../utils/axiosInstance';
 import toast from 'react-hot-toast';
@@ -7,30 +8,125 @@ import { X, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import MatchScoreBadge from '../components/MatchScoreBadge';
 import { calculateCompatibility } from '../utils/compatibility';
-
-const libraries = ['places'];
+import ProfileNudgeBanner from '../components/ProfileNudgeBanner';
 
 const mapContainerStyle = { width: '100%', height: '100%' };
 const center = { lat: 28.6139, lng: 77.2090 };
+
+const defaultMarkerIcon = L.divIcon({
+  html: `
+    <div class="flex items-center justify-center">
+      <div class="relative w-7 h-7">
+        <div class="relative flex items-center justify-center w-7 h-7 bg-rose-500 rounded-full border-2 border-white shadow-md text-white text-[10px]">
+          🏠
+        </div>
+      </div>
+    </div>
+  `,
+  className: 'flat-default-marker',
+  iconSize: [28, 28],
+  iconAnchor: [14, 28]
+});
+
+const activeMarkerIcon = L.divIcon({
+  html: `
+    <div class="flex items-center justify-center">
+      <div class="relative w-9 h-9">
+        <span class="absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75 animate-ping"></span>
+        <div class="relative flex items-center justify-center w-9 h-9 bg-primary-600 rounded-full border-2 border-white shadow-xl text-white text-[12px]">
+          ✨
+        </div>
+      </div>
+    </div>
+  `,
+  className: 'flat-active-marker',
+  iconSize: [36, 36],
+  iconAnchor: [18, 36]
+});
+
+function MapController({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      const targetZoom = map.getZoom() < 15 ? 15 : map.getZoom();
+      map.setView([center.lat, center.lng], targetZoom);
+    }
+  }, [center, map]);
+  return null;
+}
+
+const CircularArrowsMagnifierLoader = ({ title = "Fetching listings..." }) => (
+  <div className="flex flex-col items-center justify-center py-20 px-4 text-center mt-8 bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-sm transition-all duration-300">
+    <div className="relative w-24 h-24 flex items-center justify-center mb-6">
+      {/* 2 circular arrows spinning in continuous circular motion */}
+      <svg
+        className="absolute inset-0 w-full h-full animate-spin text-primary-500"
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Arc 1 */}
+        <path
+          d="M 50 14 A 36 36 0 0 1 86 50"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 79 43 L 86 51 L 92 43"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* Arc 2 chasing Arc 1 */}
+        <path
+          d="M 50 86 A 36 36 0 0 1 14 50"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M 8 57 L 14 49 L 21 57"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+
+      {/* Magnifying glass in center */}
+      <div className="relative z-10 p-3.5 bg-white dark:bg-zinc-900 rounded-full shadow-md border border-gray-100 dark:border-zinc-800 flex items-center justify-center">
+        <Search className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+      </div>
+    </div>
+
+    <h3 className="text-xl font-extrabold text-gray-900 dark:text-zinc-100 mb-1 tracking-tight animate-pulse">
+      {title}
+    </h3>
+    <p className="text-xs font-semibold text-gray-400 dark:text-zinc-500">
+      Locating available places & checking compatibility...
+    </p>
+  </div>
+);
 
 const FindFlat = ({ defaultView }) => {
   const locationPath = useLocation();
   const currentView = defaultView || (locationPath.pathname === '/browse' ? 'browse' : (locationPath.pathname === '/matches' ? 'matches' : 'map'));
 
   const [listings, setListings] = useState([]);
+  const [isLoadingListings, setIsLoadingListings] = useState(true);
   const [location, setLocation] = useState(center);
   const [activeListing, setActiveListing] = useState(null);
   const [selectedListing, setSelectedListing] = useState(null);
   const [reqStatus, setReqStatus] = useState({});
   const { user, isAuthenticated } = useAuth();
 
-  const [autocomplete, setAutocomplete] = useState(null);
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-    libraries
-  });
+  const [searchText, setSearchText] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const isLocationSelectedRef = useRef(false);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -51,12 +147,15 @@ const FindFlat = ({ defaultView }) => {
   }, []);
 
   const fetchListings = async (lat, lng) => {
+    setIsLoadingListings(true);
     try {
       const { data } = await api.get(`/listings?lat=${lat}&lng=${lng}`);
       setListings(data);
       checkSentRequests();
     } catch {
       toast.error('Failed to load flats');
+    } finally {
+      setIsLoadingListings(false);
     }
   };
 
@@ -80,21 +179,35 @@ const FindFlat = ({ defaultView }) => {
     }
   };
 
-  const onLoadAutocomplete = (ac) => {
-    setAutocomplete(ac);
-  };
-
-  const onPlaceChanged = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace();
-      if (place.geometry && place.geometry.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        setLocation({ lat, lng });
-        fetchListings(lat, lng);
-      }
+  // Nominatim search suggestions
+  useEffect(() => {
+    if (!searchText || searchText.length < 3 || isLocationSelectedRef.current) {
+      setSearchResults([]);
+      isLocationSelectedRef.current = false;
+      return;
     }
-  };
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}&limit=5&addressdetails=1`
+        );
+        const data = await response.json();
+        setSearchResults(data.map(item => ({
+          display_name: item.display_name,
+          lat: parseFloat(item.lat),
+          lon: parseFloat(item.lon)
+        })));
+      } catch (err) {
+        console.error("Geocoding error", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchText]);
 
   // Preference completion status check
   const filledPrefsCount = user?.preferences ? Object.values(user.preferences).filter(v => v && v !== '').length : 0;
@@ -168,9 +281,6 @@ const FindFlat = ({ defaultView }) => {
     );
   };
 
-  if (loadError) return <div className="p-10 text-center font-semibold text-rose-500">Map Loading Error: Please ensure you have a valid Google Maps API Key configured in your .env file.</div>;
-  if (!isLoaded) return <div className="p-10 text-center font-semibold animate-pulse text-gray-500">Loading Map Engine...</div>;
-
   // Grid views: Browse or Matches
   if (currentView === 'browse' || currentView === 'matches') {
     return (
@@ -189,15 +299,40 @@ const FindFlat = ({ defaultView }) => {
               </p>
             </div>
 
-            <div className="w-full md:max-w-md bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden flex items-center px-4 py-2">
-              <Search className="w-5 h-5 text-gray-400 mr-2 flex-shrink-0" />
-              <Autocomplete onLoad={onLoadAutocomplete} onPlaceChanged={onPlaceChanged} className="w-full">
+            <div className="relative w-full md:max-w-md z-20">
+              <div className="w-full bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden flex items-center px-4 py-2">
+                <Search className="w-5 h-5 text-gray-400 mr-2 flex-shrink-0" />
                 <input
                   type="text"
                   placeholder="Search location (e.g. Connaught Place)..."
+                  value={searchText}
+                  onChange={e => setSearchText(e.target.value)}
                   className="w-full bg-transparent outline-none text-gray-700 dark:text-zinc-200 placeholder-gray-400 dark:placeholder-zinc-500 font-medium text-sm border-0 focus:ring-0"
                 />
-              </Autocomplete>
+                {isSearching && (
+                  <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin ml-2"></div>
+                )}
+              </div>
+              {searchResults.length > 0 && (
+                <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-gray-250 dark:border-zinc-800 rounded-xl shadow-xl max-h-60 overflow-y-auto z-30 text-left">
+                  {searchResults.map((result, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        isLocationSelectedRef.current = true;
+                        setLocation({ lat: result.lat, lng: result.lon });
+                        fetchListings(result.lat, result.lon);
+                        setSearchText(result.display_name);
+                        setSearchResults([]);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-55 dark:hover:bg-zinc-800 border-b border-gray-100 dark:border-zinc-800 last:border-b-0 text-sm text-gray-800 dark:text-zinc-200 transition-colors truncate"
+                    >
+                      {result.display_name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -210,7 +345,11 @@ const FindFlat = ({ defaultView }) => {
           )}
 
           {/* Grid Listings */}
-          {filteredListings.length === 0 ? (
+          {isLoadingListings ? (
+            <CircularArrowsMagnifierLoader
+              title={currentView === 'matches' ? 'Fetching your matches...' : 'Fetching flat vacancies...'}
+            />
+          ) : filteredListings.length === 0 ? (
             <div className="text-center py-20 bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-sm mt-8">
               <span className="text-5xl">🏠</span>
               <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mt-4 mb-2">No flats found</h3>
@@ -237,7 +376,12 @@ const FindFlat = ({ defaultView }) => {
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-gray-50 dark:bg-zinc-950 transition-colors duration-200">
       <div className="w-[40%] bg-gray-50 dark:bg-zinc-950 border-r border-gray-200 dark:border-zinc-800 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
-        {listings.length === 0 ? <p className="text-center text-gray-500 dark:text-zinc-400 mt-10">No flats found nearby.</p> :
+        <ProfileNudgeBanner />
+        {isLoadingListings ? (
+          <CircularArrowsMagnifierLoader title="Fetching nearby listings..." />
+        ) : listings.length === 0 ? (
+          <p className="text-center text-gray-500 dark:text-zinc-400 mt-10">No flats found nearby.</p>
+        ) : (
           listings.map((item) => (
             <div
               key={item._id}
@@ -269,44 +413,74 @@ const FindFlat = ({ defaultView }) => {
               </div>
             </div>
           ))
-        }
+        )}
       </div>
 
-      <div className="w-[60%] relative">
-        <div className="absolute top-4 left-4 right-4 z-10 flex gap-2">
-          <div className="flex-1 max-w-md bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-gray-100 dark:border-zinc-850 overflow-hidden flex items-center px-4 py-2">
-            <Search className="w-5 h-5 text-gray-400 mr-2 flex-shrink-0" />
-            <Autocomplete
-              onLoad={onLoadAutocomplete}
-              onPlaceChanged={onPlaceChanged}
-              className="w-full"
-            >
+      <div className="w-[60%] relative z-0">
+        <div className="absolute top-4 left-4 right-4 z-30 flex gap-2">
+          <div className="relative flex-1 max-w-md">
+            <div className="w-full bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-gray-100 dark:border-zinc-850 overflow-hidden flex items-center px-4 py-2">
+              <Search className="w-5 h-5 text-gray-400 mr-2 flex-shrink-0" />
               <input
                 type="text"
                 placeholder="Search for a location (e.g., Connaught Place)..."
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
                 className="w-full bg-transparent outline-none text-gray-700 dark:text-zinc-200 placeholder-gray-400 dark:placeholder-zinc-500 font-medium text-sm border-0 focus:ring-0"
               />
-            </Autocomplete>
+              {isSearching && (
+                <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin ml-2"></div>
+              )}
+            </div>
+            {searchResults.length > 0 && (
+              <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-gray-250 dark:border-zinc-800 rounded-xl shadow-xl max-h-60 overflow-y-auto z-40 text-left">
+                {searchResults.map((result, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      isLocationSelectedRef.current = true;
+                      setLocation({ lat: result.lat, lng: result.lon });
+                      fetchListings(result.lat, result.lon);
+                      setSearchText(result.display_name);
+                      setSearchResults([]);
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-55 dark:hover:bg-zinc-800 border-b border-gray-100 dark:border-zinc-800 last:border-b-0 text-sm text-gray-800 dark:text-zinc-200 transition-colors truncate"
+                  >
+                    {result.display_name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          center={location}
-          zoom={12}
-          options={{ disableDefaultUI: true, zoomControl: true }}
+        <MapContainer
+          style={mapContainerStyle}
+          center={[location.lat, location.lng]}
+          zoom={15}
+          zoomControl={true}
+          attributionControl={false}
         >
+          <TileLayer
+            url="https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+            subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
+            maxZoom={20}
+          />
           {listings.map((item) => (
             <Marker
               key={item._id}
-              position={{ lat: item.location.coordinates[1], lng: item.location.coordinates[0] }}
-              onClick={() => {
-                setActiveListing(item._id);
+              position={[item.location.coordinates[1], item.location.coordinates[0]]}
+              eventHandlers={{
+                click: () => {
+                  setActiveListing(item._id);
+                }
               }}
-              icon={activeListing === item._id ? 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png' : 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'}
+              icon={activeListing === item._id ? activeMarkerIcon : defaultMarkerIcon}
             />
           ))}
-        </GoogleMap>
+          <MapController center={location} />
+        </MapContainer>
       </div>
 
       {/* Details Modal Overlay */}
@@ -317,7 +491,7 @@ const FindFlat = ({ defaultView }) => {
   // Helper to render details modal cleanly
   function renderDetailsModal() {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in zoom-in-95 duration-200">
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in zoom-in-95 duration-200">
         <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden border border-gray-100 dark:border-zinc-800">
           <button onClick={() => setSelectedListing(null)} className="absolute top-4 right-4 bg-white/80 dark:bg-zinc-800/80 p-1.5 rounded-full z-10 hover:bg-white dark:hover:bg-zinc-700 text-gray-800 dark:text-zinc-200 transition">
             <X className="w-5 h-5" />

@@ -12,6 +12,7 @@ import Profile from './pages/Profile';
 import { useState } from 'react';
 import AuthModals from './components/AuthModals';
 import Chats from './pages/Chats';
+import GlobalProfileNudgeBar from './components/GlobalProfileNudgeBar';
 
 function AppContent() {
   const [authModal, setAuthModal] = useState(null);
@@ -22,11 +23,14 @@ function AppContent() {
         onLoginClick={() => setAuthModal('login')}
         onRegisterClick={() => setAuthModal('register')}
       />
+      <div className="pt-16">
+        <GlobalProfileNudgeBar />
+      </div>
       {authModal && (
         <AuthModals type={authModal} onClose={() => setAuthModal(null)} />
       )}
 
-      <main className="flex-1 mt-16 flex flex-col">
+      <main className="flex-1 flex flex-col">
         <Routes>
           <Route path="/" element={<Home onRegisterClick={() => setAuthModal('register')} />} />
 

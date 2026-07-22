@@ -21,7 +21,6 @@ const Home = ({ onRegisterClick }) => {
     const fetchFeatured = async () => {
       try {
         const { data } = await api.get('/listings');
-        // Get 5-6 listings for featured
         setFeaturedListings(data.slice(0, 6));
       } catch (error) {
         console.error('Failed to fetch featured listings:', error);
@@ -107,10 +106,18 @@ const Home = ({ onRegisterClick }) => {
     }
   };
 
+  const handleBrowseListings = () => {
+    if (isAuthenticated) {
+      navigate('/browse');
+    } else {
+      onRegisterClick();
+    }
+  };
+
   return (
     <div ref={container} className="flex flex-col min-h-screen bg-white dark:bg-zinc-950 transition-colors duration-200">
       {/* Hero Section */}
-      <section className="relative pt-20 pb-32 flex items-center justify-center overflow-hidden bg-white dark:bg-zinc-950">
+      <section className="relative pt-12 pb-32 flex items-center justify-center overflow-hidden bg-white dark:bg-zinc-950">
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-100/50 dark:from-primary-950/20 via-white dark:via-zinc-950 to-white dark:to-zinc-950"></div>
         </div>
@@ -187,7 +194,7 @@ const Home = ({ onRegisterClick }) => {
                 <User className="w-8 h-8" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-3">1. Create Account</h3>
-              <p className="text-gray-605 text-gray-500 dark:text-zinc-400 leading-relaxed text-sm">Register or log in first. Every user needs a verified profile to ensure a secure matching experience.</p>
+              <p className="text-gray-500 dark:text-zinc-400 leading-relaxed text-sm">Register or log in first. Every user needs a verified profile to ensure a secure matching experience.</p>
             </div>
             
             <div className="flex flex-col items-center text-center group">
@@ -195,7 +202,7 @@ const Home = ({ onRegisterClick }) => {
                 <Search className="w-8 h-8" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-3">2. Share Habits</h3>
-              <p className="text-gray-605 text-gray-500 dark:text-zinc-400 leading-relaxed text-sm">Answer lifestyle questions. If you own a flat, easily attach flat rent details, photos, and amenities.</p>
+              <p className="text-gray-500 dark:text-zinc-400 leading-relaxed text-sm">Answer lifestyle questions. If you own a flat, easily attach flat rent details, photos, and amenities.</p>
             </div>
 
             <div className="flex flex-col items-center text-center group">
@@ -203,7 +210,7 @@ const Home = ({ onRegisterClick }) => {
                 <MapPin className="w-8 h-8" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-3">3. Pin Your Area</h3>
-              <p className="text-gray-605 text-gray-500 dark:text-zinc-400 leading-relaxed text-sm">Pin your actual flat or search boundaries directly on our interactive map page before viewing list suggestions.</p>
+              <p className="text-gray-500 dark:text-zinc-400 leading-relaxed text-sm">Pin your actual flat or search boundaries directly on our interactive map page before viewing list suggestions.</p>
             </div>
 
             <div className="flex flex-col items-center text-center group">
@@ -211,7 +218,7 @@ const Home = ({ onRegisterClick }) => {
                 <Sparkles className="w-8 h-8" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-3">4. Match & Connect</h3>
-              <p className="text-gray-605 text-gray-500 dark:text-zinc-400 leading-relaxed text-sm">Land on your custom Matches feed first. Instantly check AI compatibility percentages and chat safely.</p>
+              <p className="text-gray-500 dark:text-zinc-400 leading-relaxed text-sm">Land on your custom Matches feed first. Instantly check AI compatibility percentages and chat safely.</p>
             </div>
           </div>
         </div>
@@ -250,7 +257,7 @@ const Home = ({ onRegisterClick }) => {
                   <div
                     key={listing._id}
                     className="min-w-[300px] md:min-w-[350px] bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 dark:border-zinc-800 flex flex-col snap-start group cursor-pointer"
-                    onClick={handleIDontHaveFlat}
+                    onClick={handleBrowseListings}
                   >
                     <div className="relative h-48 overflow-hidden">
                       <img
@@ -277,7 +284,7 @@ const Home = ({ onRegisterClick }) => {
 
                 {/* Show More Card */}
                 <div
-                  onClick={handleIDontHaveFlat}
+                  onClick={handleBrowseListings}
                   className="min-w-[200px] bg-primary-50 dark:bg-zinc-900/60 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-primary-100 dark:hover:bg-zinc-800 transition-colors border border-primary-100 dark:border-zinc-800 snap-start group"
                 >
                   <div className="w-16 h-16 bg-white dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
@@ -308,7 +315,7 @@ const Home = ({ onRegisterClick }) => {
                 </div>
                 <h3 className="font-extrabold text-gray-900 dark:text-zinc-100 text-lg mb-1">{dev.name}</h3>
                 <p className="text-primary-600 dark:text-primary-400 font-semibold text-sm mb-3">{dev.role}</p>
-                <p className="text-gray-505 text-gray-500 dark:text-zinc-400 text-sm leading-relaxed">{dev.bio}</p>
+                <p className="text-gray-500 dark:text-zinc-400 text-sm leading-relaxed">{dev.bio}</p>
               </div>
             ))}
           </div>

@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import fsLogo from '../assets/FS Logo.png';
+import { isProfileIncomplete } from '../utils/profileCheck';
 
 const Navbar = ({ onLoginClick, onRegisterClick }) => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -195,7 +196,7 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
             </div>
 
             {showDropdown && (
-              <div className="absolute top-12 right-0 w-80 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-gray-100 dark:border-zinc-800 shadow-2xl rounded-xl p-4 flex flex-col gap-3 transform transition-all duration-200 origin-top-right max-h-[80vh] overflow-y-auto">
+              <div className="absolute top-12 right-0 w-80 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-gray-100 dark:border-zinc-800 shadow-2xl rounded-xl p-4 flex flex-col gap-3 transform transition-all duration-200 origin-top-right max-h-[80vh] overflow-y-auto z-[9999]">
 
                 {/* ── PENDING REQUESTS ── */}
                 <h4 className="font-bold text-gray-800 dark:text-zinc-100 border-b border-gray-100 dark:border-zinc-800 pb-2">Incoming Requests</h4>
@@ -250,6 +251,11 @@ const Navbar = ({ onLoginClick, onRegisterClick }) => {
                 </div>
               )}
               <span className="font-semibold text-sm text-gray-700 dark:text-zinc-300 hidden sm:block">{user.name}</span>
+              {isProfileIncomplete(user) && (
+                <span className="bg-amber-400 text-gray-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce">
+                  Update
+                </span>
+              )}
             </Link>
             <button onClick={() => { logout(); navigate('/'); }} className="p-2 text-gray-500 dark:text-zinc-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 rounded-full transition-colors">
               <LogOut className="w-5 h-5" />
