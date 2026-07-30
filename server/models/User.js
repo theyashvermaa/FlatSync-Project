@@ -20,7 +20,8 @@ const userSchema = new mongoose.Schema({
     guestFrequency: { type: String, enum: ['Frequently', 'Occasionally', 'Rarely', 'Never'] },
     noiseTolerance: { type: String, enum: ['Prefer quiet environment', 'Moderate noise is fine', 'Comfortable with loud environment'] },
     sharingExpenses: { type: String, enum: ['Strictly divided', 'Flexible sharing', 'I prefer someone else to manage', 'Discuss and decide'] },
-    lifestylePersonality: { type: String, enum: ['Social & outgoing', 'Balanced', 'Private & reserved'] }
+    lifestylePersonality: { type: String, enum: ['Social & outgoing', 'Balanced', 'Private & reserved'] },
+    agePreference: { type: String, enum: ['18 - 25 years', '20 - 30 years', '25 - 35 years', '30+ years', 'Any Age'] }
   },
   userType: { type: Number, enum: [1, 2] },
   location: {

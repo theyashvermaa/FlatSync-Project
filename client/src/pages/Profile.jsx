@@ -146,30 +146,30 @@ const Profile = () => {
         <div className="w-full md:w-[35%] flex flex-col gap-6">
           <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-gray-100 dark:border-zinc-800 shadow-sm flex flex-col items-center text-center relative overflow-hidden transition-all">
             <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-br from-primary-500 to-primary-600 z-0"></div>
-            
+
             <div className="relative mt-8 mb-6 z-10 w-32 h-32">
-               <img src={photoPreview || 'https://via.placeholder.com/150'} alt="Profile" className="w-full h-full rounded-full object-cover border-4 border-white dark:border-zinc-900 bg-gray-100 dark:bg-zinc-800 shadow-md" />
-               {isEditing && (
-                 <label className="absolute bottom-0 right-0 bg-primary-600 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 transition shadow-lg text-white border-2 border-white dark:border-zinc-900">
-                    <Camera className="w-5 h-5"/>
-                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                       if (e.target.files[0]) {
-                         setFormData({...formData, photo: e.target.files[0]});
-                         setPhotoPreview(URL.createObjectURL(e.target.files[0]));
-                       }
-                    }} />
-                 </label>
-               )}
+              <img src={photoPreview || 'https://via.placeholder.com/150'} alt="Profile" className="w-full h-full rounded-full object-cover border-4 border-white dark:border-zinc-900 bg-gray-100 dark:bg-zinc-800 shadow-md" />
+              {isEditing && (
+                <label className="absolute bottom-0 right-0 bg-primary-600 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 transition shadow-lg text-white border-2 border-white dark:border-zinc-900">
+                  <Camera className="w-5 h-5" />
+                  <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                    if (e.target.files[0]) {
+                      setFormData({ ...formData, photo: e.target.files[0] });
+                      setPhotoPreview(URL.createObjectURL(e.target.files[0]));
+                    }
+                  }} />
+                </label>
+              )}
             </div>
-            
+
             <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-1 z-10">{user?.name}</h2>
             <p className="text-gray-500 dark:text-zinc-400 mb-6 z-10 font-medium">{user?.email}</p>
-            
+
             <button onClick={handleEditToggle} className={`w-full flex items-center justify-center gap-2 font-bold py-3 rounded-xl transition shadow-sm ${isEditing ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700' : 'bg-primary-50 text-primary-700 hover:bg-primary-100 dark:bg-primary-950/30 dark:text-primary-400 dark:hover:bg-primary-900/50 dark:hover:shadow-none'}`}>
-              <Edit className="w-4 h-4"/> {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+              <Edit className="w-4 h-4" /> {isEditing ? 'Cancel Edit' : 'Edit Profile'}
             </button>
           </div>
-          
+
           {!isEditing && (
             <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border border-gray-100 dark:border-zinc-800 shadow-sm">
               <h3 className="font-bold text-lg mb-5 flex items-center gap-2 text-gray-900 dark:text-zinc-100"><Settings className="w-5 h-5 text-primary-500" /> My Preferences</h3>
@@ -185,7 +185,7 @@ const Profile = () => {
                           <span className="font-semibold text-gray-800 dark:text-zinc-200">{value}</span>
                         </div>
                       );
-                  })}
+                    })}
                 </div>
               ) : <p className="text-gray-500 dark:text-zinc-400 text-sm italic">No preferences set.</p>}
             </div>
@@ -201,23 +201,23 @@ const Profile = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-2">Display Name</label>
-                    <input type="text" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none transition" />
+                    <input type="text" value={formData.name || ''} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none transition" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-2">Age</label>
-                    <input type="number" value={formData.age || ''} onChange={e => setFormData({...formData, age: e.target.value})} className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none transition" />
+                    <input type="number" value={formData.age || ''} onChange={e => setFormData({ ...formData, age: e.target.value })} className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none transition" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-2">Mobile</label>
-                    <input type="text" value={formData.mobileNumber || ''} onChange={e => setFormData({...formData, mobileNumber: e.target.value})} className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none transition" />
+                    <input type="text" value={formData.mobileNumber || ''} onChange={e => setFormData({ ...formData, mobileNumber: e.target.value })} className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none transition" />
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-2">Full Address</label>
-                    <input type="text" value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none transition" />
+                    <input type="text" value={formData.address || ''} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none transition" />
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-2">About Me</label>
-                    <textarea rows="4" value={formData.aboutMe || ''} onChange={e => setFormData({...formData, aboutMe: e.target.value})} className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none transition resize-none" placeholder="Tell potential flatmates about your hobbies, routine, or personality..."></textarea>
+                    <textarea rows="4" value={formData.aboutMe || ''} onChange={e => setFormData({ ...formData, aboutMe: e.target.value })} className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none transition resize-none" placeholder="Tell potential flatmates about your hobbies, routine, or personality..."></textarea>
                   </div>
                 </div>
                 <button disabled={loading} type="submit" className="mt-4 w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -231,7 +231,7 @@ const Profile = () => {
                 <h3 className="font-bold text-xl mb-4 border-b border-gray-100 dark:border-zinc-800 pb-3 text-gray-800 dark:text-zinc-100">About Me</h3>
                 <p className="text-gray-600 dark:text-zinc-300 leading-relaxed">{user?.aboutMe || <span className="italic text-gray-400 dark:text-zinc-500">No details provided yet. Add an about me section to help flatmates know you better.</span>}</p>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <div className="bg-gray-50 dark:bg-zinc-900/50 rounded-2xl p-5 border border-gray-100 dark:border-zinc-800">
                   <p className="text-xs text-gray-400 dark:text-zinc-500 mb-1 font-bold uppercase tracking-wider">Age</p>
@@ -254,7 +254,7 @@ const Profile = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 dark:border-zinc-800 pb-4">
               <div>
                 <h3 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-zinc-100">
-                  <Home className="w-6 h-6 text-primary-500"/> My Posted Flats
+                  <Home className="w-6 h-6 text-primary-500" /> My Posted Flats
                 </h3>
                 <p className="text-xs text-gray-400 dark:text-zinc-500 mt-1">
                   Manage your active listings, edit information, or add another flat.

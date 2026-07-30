@@ -14,8 +14,8 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (isAuthenticated && user) {
 
-      // ✅ Fixed to connect to backend server on port 5000
-      const newSocket = io('http://localhost:5000', {
+      const backendUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+      const newSocket = io(backendUrl, {
         query: { userId: user._id },
         withCredentials: true,
         transports: ['websocket', 'polling'],

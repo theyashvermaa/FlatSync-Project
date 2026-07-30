@@ -196,10 +196,20 @@ const ListingModal = ({ isOpen, onClose, initialListing = null, onSaveSuccess })
   };
 
   const handlePhotoChange = (e) => {
-    const files = Array.from(e.target.files);
-    setFormData(prev => ({ ...prev, photos: files }));
-    const previews = files.map(file => URL.createObjectURL(file));
-    setPhotoPreviews(previews);
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      const combinedPhotos = [...(formData.photos || []), ...newFiles];
+      setFormData(prev => ({ ...prev, photos: combinedPhotos }));
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setPhotoPreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+
+  const handleRemovePhoto = (index) => {
+    const updatedPhotos = Array.isArray(formData.photos) ? formData.photos.filter((_, i) => i !== index) : [];
+    const updatedPreviews = photoPreviews.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, photos: updatedPhotos }));
+    setPhotoPreviews(updatedPreviews);
   };
 
   const handleSubmit = async (e) => {
@@ -501,14 +511,23 @@ const ListingModal = ({ isOpen, onClose, initialListing = null, onSaveSuccess })
               className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-xl p-3 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
             />
             {photoPreviews.length > 0 && (
-              <div className="flex gap-3 mt-3 overflow-x-auto pb-2 custom-scrollbar">
+              <div className="flex gap-3 mt-3 overflow-x-auto pb-2 pt-1 custom-scrollbar">
                 {photoPreviews.map((src, idx) => (
-                  <img
-                    key={idx}
-                    src={src}
-                    alt={`Preview ${idx + 1}`}
-                    className="w-20 h-20 rounded-xl object-cover border border-gray-200 dark:border-zinc-800 flex-shrink-0"
-                  />
+                  <div key={idx} className="relative group flex-shrink-0">
+                    <img
+                      src={src}
+                      alt={`Preview ${idx + 1}`}
+                      className="w-20 h-20 rounded-xl object-cover border border-gray-200 dark:border-zinc-800 shadow-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(idx)}
+                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md transition-all scale-90 hover:scale-110 flex items-center justify-center cursor-pointer z-10"
+                      title="Remove image"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 ))}
               </div>
             )}

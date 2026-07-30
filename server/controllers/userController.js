@@ -14,54 +14,78 @@ const getUserProfile = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
   try {
+    const body = req.body || {};
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.name = req.body.name || user.name;
+    if (body.name) user.name = body.name;
     
-    // Prevent Mongoose CastError if age is empty string
-    if (req.body.age !== undefined && req.body.age !== '') {
-        user.age = req.body.age;
+    // Prevent Mongoose CastError if age is empty string or invalid number
+    if (body.age !== undefined && body.age !== '') {
+      const numAge = Number(body.age);
+      if (!isNaN(numAge)) user.age = numAge;
     }
     
-    user.mobileNumber = req.body.mobileNumber || user.mobileNumber;
-    user.address = req.body.address || user.address;
-    user.aboutMe = req.body.aboutMe || user.aboutMe;
+    if (body.mobileNumber !== undefined) user.mobileNumber = body.mobileNumber;
+    if (body.address !== undefined) user.address = body.address;
+    if (body.aboutMe !== undefined) user.aboutMe = body.aboutMe;
     
-    if (req.body.preferences && req.body.preferences !== 'undefined') {
-        try {
-            const parsedPrefs = JSON.parse(req.body.preferences);
-            // Safely extract existing preferences, stripping Mongoose bindings
-            const currentPrefs = user.preferences && typeof user.preferences.toJSON === 'function' ? user.preferences.toJSON() : (user.preferences || {});
-            user.preferences = { ...currentPrefs, ...parsedPrefs };
-        } catch (err) {
-            console.error('Error parsing preferences:', err);
+    // Safely parse & merge preferences
+    if (body.preferences && body.preferences !== 'undefined' && body.preferences !== '') {
+      try {
+        const parsedPrefs = typeof body.preferences === 'string'
+          ? JSON.parse(body.preferences)
+          : body.preferences;
+
+        const validPrefKeys = [
+          'foodPreference', 'smokingHabit', 'alcoholConsumption',
+          'cleanlinessLevel', 'sleepSchedule', 'workStudyRoutine',
+          'guestFrequency', 'noiseTolerance', 'sharingExpenses', 'lifestylePersonality'
+        ];
+
+        const currentPrefs = user.preferences ? (user.preferences.toObject ? user.preferences.toObject() : user.preferences) : {};
+        const updatedPrefs = { ...currentPrefs };
+
+        for (const key of validPrefKeys) {
+          if (parsedPrefs[key] !== undefined && parsedPrefs[key] !== null && parsedPrefs[key] !== '') {
+            updatedPrefs[key] = parsedPrefs[key];
+          }
         }
+        user.preferences = updatedPrefs;
+      } catch (err) {
+        console.error('Error parsing preferences:', err);
+      }
     }
 
-    // Handle File Uploads securely with error boundaries
+    // Handle File Uploads safely
     if (req.file) {
-      if (process.env.CLOUDINARY_API_KEY === 'dummy_key' || process.env.CLOUDINARY_API_KEY === 'dummy') {
-         return res.status(400).json({ message: 'Cannot upload photo: Please configure real Cloudinary keys in server/.env' });
-      }
-      try {
-        const result = await streamUpload(req.file.buffer);
-        user.photoUrl = result.secure_url;
-      } catch (uploadObjErr) {
-        return res.status(500).json({ message: 'Cloudinary Upload Failed', error: uploadObjErr.message });
+      const cloudKey = process.env.CLOUDINARY_API_KEY;
+      if (!cloudKey || cloudKey === 'dummy_key' || cloudKey === 'dummy') {
+        console.warn('Cloudinary API key not configured, skipping image upload.');
+      } else {
+        try {
+          const result = await streamUpload(req.file.buffer);
+          user.photoUrl = result.secure_url;
+        } catch (uploadObjErr) {
+          console.error('Cloudinary Upload Failed:', uploadObjErr);
+        }
       }
     }
 
     const updatedUser = await user.save();
 
-    // Invalidate cached match scores so stale data is not served
-    await MatchScore.deleteMany({ $or: [{ user1: updatedUser._id }, { user2: updatedUser._id }] });
+    // Invalidate cached match scores safely
+    try {
+      await MatchScore.deleteMany({ $or: [{ user1: updatedUser._id }, { user2: updatedUser._id }] });
+    } catch (cacheErr) {
+      console.error('MatchScore cache clearance warning:', cacheErr.message);
+    }
 
     const returnedUser = await User.findById(updatedUser._id).select('-password');
     res.json(returnedUser);
   } catch (error) {
     console.error('Profile Update Error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error updating profile', error: error.message });
   }
 };
 

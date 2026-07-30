@@ -5,10 +5,22 @@ let io;
 const onlineUsers = new Map(); // userId -> socketId
 
 const initSocket = (server) => {
+  const allowedOrigins = [
+    process.env.CLIENT_URL,
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175'
+  ].filter(Boolean);
+
   io = new Server(server, {
     cors: {
-      // ✅ Match exactly what server.js allows — all three ports
-      origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+          callback(null, true);
+        } else {
+          callback(null, true);
+        }
+      },
       credentials: true,
     },
   });

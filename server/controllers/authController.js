@@ -9,13 +9,20 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: 'User already exists' });
-    
+
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
     const user = await User.create({ name, email, password });
-    const userObj = user.toObject();
-    delete userObj.password;
-    userObj.token = generateToken(user._id);
-    res.status(201).json(userObj);
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      onboardingComplete: user.onboardingComplete,
+      token: generateToken(user._id)
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -25,18 +32,26 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    
-    if (!user) {
-      return res.status(404).json({ message: 'Email not registered' });
-    }
-    
-    if (await user.matchPassword(password)) {
-      const userObj = user.toObject();
-      delete userObj.password;
-      userObj.token = generateToken(user._id);
-      res.json(userObj);
+
+    if (user && (await user.matchPassword(password))) {
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        age: user.age,
+        mobileNumber: user.mobileNumber,
+        photoUrl: user.photoUrl,
+        address: user.address,
+        aboutMe: user.aboutMe,
+        preferences: user.preferences,
+        userType: user.userType,
+        location: user.location,
+        onboardingComplete: user.onboardingComplete,
+        savedListings: user.savedListings,
+        token: generateToken(user._id)
+      });
     } else {
-      res.status(401).json({ message: 'Invalid password' });
+      res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -56,6 +71,7 @@ const submitOnboarding = async (req, res) => {
       noiseTolerance, 
       sharingExpenses, 
       lifestylePersonality,
+      agePreference,
       userType,
       address,
       lat,
@@ -65,7 +81,10 @@ const submitOnboarding = async (req, res) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     
-    user.preferences = {
+    const currentPrefs = user.preferences ? (user.preferences.toObject ? user.preferences.toObject() : user.preferences) : {};
+    const newPrefs = { ...currentPrefs };
+
+    const incomingPrefs = {
       foodPreference,
       smokingHabit,
       alcoholConsumption,
@@ -75,8 +94,17 @@ const submitOnboarding = async (req, res) => {
       guestFrequency,
       noiseTolerance,
       sharingExpenses,
-      lifestylePersonality
+      lifestylePersonality,
+      agePreference
     };
+
+    Object.keys(incomingPrefs).forEach(key => {
+      if (incomingPrefs[key] !== undefined && incomingPrefs[key] !== null && incomingPrefs[key] !== '') {
+        newPrefs[key] = incomingPrefs[key];
+      }
+    });
+
+    user.preferences = newPrefs;
     if (userType) user.userType = Number(userType);
     if (address) user.address = address;
     if (lat && lng) {
@@ -90,7 +118,8 @@ const submitOnboarding = async (req, res) => {
     
     res.json(updatedUser);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Onboarding Submit Error:', error);
+    res.status(500).json({ message: 'Server error completing onboarding', error: error.message });
   }
 };
 

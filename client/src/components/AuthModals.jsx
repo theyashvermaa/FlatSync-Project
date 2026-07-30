@@ -78,7 +78,7 @@ const AuthModals = ({ type, onClose }) => {
             {!isLogin && (
               <div>
                 <label className="block text-sm font-semibold text-black dark:text-pure-white mb-1">Full Name</label>
-                <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition text-black dark:text-pure-white bg-white dark:bg-zinc-850" placeholder="John Doe" />
+                <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition text-black dark:text-pure-white bg-white dark:bg-zinc-850" placeholder="Ajay Kapoor" />
               </div>
             )}
             
@@ -86,7 +86,7 @@ const AuthModals = ({ type, onClose }) => {
               <label className="block text-sm font-semibold text-black dark:text-pure-white mb-1">Email Address</label>
               <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition text-black dark:text-pure-white bg-white dark:bg-zinc-850" placeholder="you@example.com" />
             </div>
- 
+
             <div>
               <label className="block text-sm font-semibold text-black dark:text-pure-white mb-1">Password</label>
               <div className="relative">
@@ -108,7 +108,7 @@ const AuthModals = ({ type, onClose }) => {
                 </button>
               </div>
             </div>
- 
+
             {!isLogin && (
               <div>
                 <label className="block text-sm font-semibold text-black dark:text-pure-white mb-1">Confirm Password</label>
@@ -132,12 +132,12 @@ const AuthModals = ({ type, onClose }) => {
                 </div>
               </div>
             )}
- 
+
             <button disabled={loading} type="submit" className="mt-2 w-full bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-lg font-bold shadow-md shadow-primary-500/30 transition disabled:opacity-70 disabled:cursor-not-allowed">
               {loading ? 'Processing...' : (isLogin ? 'Login' : 'Sign Up')}
             </button>
           </form>
- 
+
           <p className="mt-6 text-center text-sm text-black dark:text-pure-white">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button onClick={handleToggle} className="text-primary-600 font-bold hover:underline bg-transparent border-none p-0 cursor-pointer">

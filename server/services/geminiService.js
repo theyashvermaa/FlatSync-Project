@@ -1,4 +1,4 @@
-const https = require('https');
+const { GoogleGenAI } = require('@google/genai');
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -44,30 +44,37 @@ const isProfileSparse = (user) => {
   return filled < 3;
 };
 
+/**
+ * Initialize Google Gen AI client using GEMINI_API_KEY from server/.env
+ */
+const getAIClient = () => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'YOUR_KEY_HERE') {
+    throw new Error('GEMINI_API_KEY is not configured in server/.env');
+  }
+  return new GoogleGenAI({ apiKey });
+};
+
 // ─────────────────────────────────────────────
 // Non-streaming (cache-hit path)
 // ─────────────────────────────────────────────
 
 /**
- * Calls Gemini and returns { matchPercentage, summary, highlights }.
- * Used when there is a cache miss and we need a full result before storing.
+ * Calls Gemini SDK and returns { matchPercentage, summary, highlights }.
  */
 const getMatchScore = async (profile1, profile2) => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'YOUR_KEY_HERE') {
-    throw new Error('GEMINI_API_KEY is not configured in server/.env');
-  }
-
+  const ai = getAIClient();
   const p1 = sanitize(profile1);
   const p2 = sanitize(profile2);
+  const prompt = buildPrompt(p1, p2);
 
-  const requestBody = JSON.stringify({
-    contents: [{ parts: [{ text: buildPrompt(p1, p2) }] }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 300 },
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
   });
 
-  const result = await callGeminiAPI(apiKey, requestBody);
-  return parseGeminiResponse(result, profile1, profile2);
+  const text = response.text;
+  return parseRawText(text, profile1, profile2);
 };
 
 // ─────────────────────────────────────────────
@@ -76,180 +83,59 @@ const getMatchScore = async (profile1, profile2) => {
 
 /**
  * Streams the Gemini response directly to `res` as Server-Sent Events.
- * Emits:
- *   data: {"type":"chunk","text":"..."}\n\n   — while streaming
- *   data: {"type":"result", ...finalPayload}\n\n  — when done
- *   data: [DONE]\n\n                               — signals end-of-stream
- *
- * @param {Object} profile1
- * @param {Object} profile2
- * @param {import('express').Response} res  — must have SSE headers already set
- * @param {AbortSignal} [signal]
- * @returns {Promise<{matchPercentage, summary, highlights}>}  — resolved value for caching
  */
-const streamMatchScore = (profile1, profile2, res, signal) => {
-  return new Promise((resolve, reject) => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey || apiKey === 'YOUR_KEY_HERE') {
-      return reject(new Error('GEMINI_API_KEY is not configured in server/.env'));
+const streamMatchScore = async (profile1, profile2, res, signal) => {
+  const ai = getAIClient();
+  const p1 = sanitize(profile1);
+  const p2 = sanitize(profile2);
+  const prompt = buildPrompt(p1, p2);
+
+  let rawText = '';
+  try {
+    const responseStream = await ai.models.generateContentStream({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    for await (const chunk of responseStream) {
+      if (signal?.aborted) break;
+      const text = chunk.text;
+      if (text) {
+        rawText += text;
+        res.write(`data: ${JSON.stringify({ type: 'chunk', text })}\n\n`);
+      }
     }
 
-    const p1 = sanitize(profile1);
-    const p2 = sanitize(profile2);
-
-    const body = JSON.stringify({
-      contents: [{ parts: [{ text: buildPrompt(p1, p2) }] }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: 300 },
-    });
-
-    const options = {
-      hostname: 'generativelanguage.googleapis.com',
-      path: `/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
-      },
-    };
-
-    let rawText = '';
-    let aborted = false;
-
-    const req = https.request(options, (geminiRes) => {
-      geminiRes.on('data', (chunk) => {
-        if (aborted) return;
-        // Each chunk may contain multiple SSE lines from Gemini
-        const lines = chunk.toString().split('\n');
-        for (const line of lines) {
-          if (!line.startsWith('data:')) continue;
-          const raw = line.slice(5).trim();
-          if (raw === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(raw);
-            const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (text) {
-              rawText += text;
-              // Forward chunk to client
-              res.write(`data: ${JSON.stringify({ type: 'chunk', text })}\n\n`);
-            }
-          } catch {
-            // Ignore non-JSON lines
-          }
-        }
-      });
-
-      geminiRes.on('end', () => {
-        if (aborted) return;
-        // Parse the assembled text into our result shape
-        const result = parseRawText(rawText, profile1, profile2);
-        res.write(`data: ${JSON.stringify({ type: 'result', ...result })}\n\n`);
-        res.write('data: [DONE]\n\n');
-        res.end();
-        resolve(result);
-      });
-
-      geminiRes.on('error', (err) => {
-        if (!aborted) reject(err);
-      });
-    });
-
-    req.on('error', (err) => {
-      if (!aborted) reject(err);
-    });
-
-    // AbortController support: if the client disconnects, cancel the Gemini request
-    if (signal) {
-      signal.addEventListener('abort', () => {
-        aborted = true;
-        req.destroy();
-      });
-    }
-
-    req.write(body);
-    req.end();
-  });
-};
-
-// ─────────────────────────────────────────────
-// Raw HTTPS call (non-streaming, for cache-hit path)
-// ─────────────────────────────────────────────
-
-const callGeminiAPI = (apiKey, body) => {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'generativelanguage.googleapis.com',
-      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
-      },
-    };
-
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', (chunk) => (data += chunk));
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(data);
-          if (res.statusCode !== 200) {
-            reject(new Error(`Gemini API error ${res.statusCode}: ${JSON.stringify(parsed)}`));
-          } else {
-            resolve(parsed);
-          }
-        } catch {
-          reject(new Error('Failed to parse Gemini API response'));
-        }
-      });
-    });
-
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
+    const finalResult = parseRawText(rawText, profile1, profile2);
+    res.write(`data: ${JSON.stringify({ type: 'result', ...finalResult })}\n\n`);
+    res.write('data: [DONE]\n\n');
+    res.end();
+    return finalResult;
+  } catch (err) {
+    console.error('Gemini API Error:', err.message || err);
+    res.write(`data: ${JSON.stringify({ type: 'error', message: err.message || 'Gemini API Error' })}\n\n`);
+    res.write('data: [DONE]\n\n');
+    res.end();
+    throw err;
+  }
 };
 
 // ─────────────────────────────────────────────
 // Response parsing
 // ─────────────────────────────────────────────
 
-/**
- * Parses the assembled raw text from the streaming path.
- */
 const parseRawText = (rawText, profile1, profile2) => {
   const sparse = isProfileSparse(profile1) || isProfileSparse(profile2);
-  try {
-    const cleaned = rawText.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(cleaned);
-    return buildResult(parsed, sparse);
-  } catch {
-    return fallback(sparse);
-  }
+  const cleaned = rawText.replace(/```json|```/g, '').trim();
+  const parsed = JSON.parse(cleaned);
+  return buildResult(parsed, sparse);
 };
 
-/**
- * Parses the full Gemini REST API response object (non-streaming path).
- */
-const parseGeminiResponse = (apiResponse, profile1, profile2) => {
-  const sparse = isProfileSparse(profile1) || isProfileSparse(profile2);
-  try {
-    const text = apiResponse?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const cleaned = text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(cleaned);
-    return buildResult(parsed, sparse);
-  } catch {
-    return fallback(sparse);
-  }
-};
-
-/**
- * Validate and normalise the parsed JSON into our result shape.
- */
 const buildResult = (parsed, sparse) => {
   const matchPercentage =
     typeof parsed.matchPercentage === 'number'
       ? Math.max(0, Math.min(100, Math.round(parsed.matchPercentage)))
-      : null;
+      : 50;
 
   let summary =
     typeof parsed.summary === 'string' && parsed.summary.length > 0
@@ -269,13 +155,5 @@ const buildResult = (parsed, sparse) => {
 
   return { matchPercentage, summary, highlights };
 };
-
-const fallback = (sparse) => ({
-  matchPercentage: null,
-  summary: sparse
-    ? 'Add more preferences to your profile for a better score.'
-    : 'Could not calculate score.',
-  highlights: [],
-});
 
 module.exports = { getMatchScore, streamMatchScore };

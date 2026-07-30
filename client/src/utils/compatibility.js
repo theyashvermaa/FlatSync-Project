@@ -21,7 +21,8 @@ export const calculateCompatibility = (userPrefs, ownerPrefs) => {
     'guestFrequency',
     'noiseTolerance',
     'sharingExpenses',
-    'lifestylePersonality'
+    'lifestylePersonality',
+    'agePreference'
   ];
   
   keys.forEach(key => {

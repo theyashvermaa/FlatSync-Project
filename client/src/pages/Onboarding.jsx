@@ -57,7 +57,8 @@ const questions = [
   { id: 'guestFrequency', title: 'How often do you have guests over?', description: 'Some like it quiet, some like it lively.', options: ['Frequently', 'Occasionally', 'Rarely', 'Never'] },
   { id: 'noiseTolerance', title: 'What is your noise preference?', description: 'From pin-drop silence to house parties.', options: ['Prefer quiet environment', 'Moderate noise is fine', 'Comfortable with loud environment'] },
   { id: 'sharingExpenses', title: 'How do you prefer handling shared responsibilities (rent, chores, bills)?', description: 'Money and chores are top reasons for conflicts.', options: ['Strictly divided', 'Flexible sharing', 'I prefer someone else to manage', 'Discuss and decide'] },
-  { id: 'lifestylePersonality', title: 'Which best describes your lifestyle?', description: 'Finding the right vibe is key.', options: ['Social & outgoing', 'Balanced', 'Private & reserved'] }
+  { id: 'lifestylePersonality', title: 'Which best describes your lifestyle?', description: 'Finding the right vibe is key.', options: ['Social & outgoing', 'Balanced', 'Private & reserved'] },
+  { id: 'agePreference', title: 'What is your age group preference for flatmates?', description: 'Find roomies or flatmates within your preferred age bracket.', options: ['18 - 25 years', '20 - 30 years', '25 - 35 years', '30+ years', 'Any Age'] }
 ];
 
 const Onboarding = () => {
@@ -169,6 +170,13 @@ const Onboarding = () => {
     }
     setSelectedAmenities(updated);
     setFlatData({ ...flatData, facilities: updated.join(', ') });
+  };
+
+  const handleRemovePhoto = (index) => {
+    const updatedPhotos = flatData.photos.filter((_, i) => i !== index);
+    const updatedPreviews = photoPreviews.filter((_, i) => i !== index);
+    setFlatData({ ...flatData, photos: updatedPhotos });
+    setPhotoPreviews(updatedPreviews);
   };
 
   // Nominatim search effect
@@ -496,17 +504,28 @@ const Onboarding = () => {
               accept="image/*" 
               onChange={e => {
                 if (e.target.files && e.target.files.length > 0) {
-                  const filesArray = Array.from(e.target.files).slice(0, 5);
-                  setFlatData({ ...flatData, photos: filesArray });
-                  setPhotoPreviews(filesArray.map(file => URL.createObjectURL(file)));
+                  const newFiles = Array.from(e.target.files);
+                  const combinedPhotos = [...flatData.photos, ...newFiles].slice(0, 5);
+                  setFlatData({ ...flatData, photos: combinedPhotos });
+                  setPhotoPreviews(combinedPhotos.map(file => typeof file === 'string' ? file : URL.createObjectURL(file)));
                 }
               }} 
               className="w-full border border-dashed border-gray-300 dark:border-zinc-700 rounded-xl p-3 bg-gray-50/50 dark:bg-zinc-850/50 cursor-pointer text-gray-550 dark:text-zinc-400" 
             />
             {photoPreviews.length > 0 && (
-              <div className="flex overflow-x-auto gap-3 mt-3 pb-1 custom-scrollbar">
+              <div className="flex overflow-x-auto gap-3 mt-3 pb-2 pt-1 custom-scrollbar">
                 {photoPreviews.map((preview, i) => (
-                  <img key={i} src={preview} alt="flat preview" className="w-24 h-24 min-w-[6rem] object-cover rounded-xl border border-gray-250 dark:border-zinc-700 shadow-sm" />
+                  <div key={i} className="relative group flex-shrink-0">
+                    <img src={preview} alt={`flat preview ${i + 1}`} className="w-24 h-24 object-cover rounded-xl border border-gray-250 dark:border-zinc-700 shadow-sm" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(i)}
+                      className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md transition-all scale-90 hover:scale-110 flex items-center justify-center cursor-pointer z-10"
+                      title="Remove image"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 ))}
               </div>
             )}

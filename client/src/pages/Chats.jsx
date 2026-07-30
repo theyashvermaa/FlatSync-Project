@@ -12,7 +12,7 @@ const getRoomId = (id1, id2) => [id1, id2].sort().join('_');
 const Chats = () => {
   const { receiverId } = useParams();
   const { user } = useAuth();
-  const { socket, msgNotifications, clearMsgNotifications } = useSocket();
+  const { socket, msgNotifications } = useSocket();
   const navigate = useNavigate();
 
   const [connections, setConnections] = useState([]);
@@ -85,7 +85,7 @@ const Chats = () => {
     const handleUserOffline = (offlineUserId) => {
       setOnlineUsers(prev => prev.filter(id => id !== offlineUserId));
     };
-    //duplicate messages 
+
     const handleMessage = (newMsg) => {
       setMessages(prev => {
         if (prev.some(m => m._id === newMsg._id)) return prev;
@@ -166,73 +166,72 @@ const Chats = () => {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center flex-1 bg-gray-50">
+      <div className="flex items-center justify-center flex-1 bg-gray-50 dark:bg-zinc-950">
         <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden bg-white">
+    <div className="flex flex-1 h-[calc(100vh-4.5rem)] overflow-hidden bg-gray-50 dark:bg-zinc-950 transition-colors duration-200">
       {/* Sidebar - Contacts */}
-      <div className={`${receiverId ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-gray-200 bg-gray-50/50`}>
-        <div className="p-4 border-b border-gray-200 bg-white">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary-600" />
+      <div className={`${receiverId ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-col border-r border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 transition-colors duration-200`}>
+        <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+          <h2 className="text-xl font-extrabold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             Messages
           </h2>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {loadingConnections ? (
-            <div className="flex justify-center p-4">
+            <div className="flex justify-center p-6">
               <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : connections.length === 0 ? (
-            <div className="text-center p-6 text-gray-500">
-              <p>No conversations yet.</p>
-              <p className="text-sm mt-2">Connect with others to start chatting!</p>
+            <div className="text-center p-8 text-gray-500 dark:text-zinc-400">
+              <p className="font-semibold text-gray-700 dark:text-zinc-300">No conversations yet.</p>
+              <p className="text-xs mt-2">Connect with others to start chatting!</p>
             </div>
           ) : (
             connections.map(contact => {
               const isActive = contact._id === receiverId;
-              const isOnline = onlineUsers?.some(        // prevent online crash 
+              const isOnline = onlineUsers?.some(
                 id => id.toString() === contact._id.toString()
               );
-              // Check if there's an unread notification for this user
               const hasUnread = msgNotifications.some(n => n.senderId === contact._id);
 
               return (
                 <Link
                   key={contact._id}
                   to={`/chats/${contact._id}`}
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${isActive
-                      ? 'bg-primary-50 border border-primary-100 shadow-sm'
-                      : 'hover:bg-white hover:shadow-sm border border-transparent'
+                  className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${isActive
+                      ? 'bg-primary-50 dark:bg-primary-950/60 border border-primary-200 dark:border-primary-800/60 shadow-xs'
+                      : 'hover:bg-gray-100 dark:hover:bg-zinc-800/60 border border-transparent'
                     }`}
                 >
-                  <div className="relative">
+                  <div className="relative shrink-0">
                     {contact.photoUrl ? (
-                      <img src={contact.photoUrl} alt={contact.name} className="w-12 h-12 rounded-full object-cover shadow-sm" />
+                      <img src={contact.photoUrl} alt={contact.name} className="w-12 h-12 rounded-full object-cover shadow-xs border border-gray-200 dark:border-zinc-700" />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
+                      <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-base border border-primary-200 dark:border-primary-800/50">
                         {contact.name?.[0]?.toUpperCase()}
                       </div>
                     )}
                     {isOnline && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
+                      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full"></div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`font-semibold truncate ${isActive ? 'text-primary-800' : 'text-gray-800'}`}>
+                    <p className={`font-extrabold text-sm truncate ${isActive ? 'text-primary-900 dark:text-primary-200' : 'text-gray-900 dark:text-zinc-100'}`}>
                       {contact.name}
                     </p>
-                    <p className={`text-xs truncate ${isActive ? 'text-primary-600' : 'text-gray-500'}`}>
+                    <p className={`text-xs truncate ${isActive ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-gray-500 dark:text-zinc-400'}`}>
                       {isOnline ? 'Online' : 'Offline'}
                     </p>
                   </div>
                   {hasUnread && !isActive && (
-                    <div className="w-2.5 h-2.5 bg-rose-500 rounded-full"></div>
+                    <div className="w-2.5 h-2.5 bg-rose-500 rounded-full shrink-0"></div>
                   )}
                 </Link>
               );
@@ -242,56 +241,58 @@ const Chats = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className={`${!receiverId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-gray-950 relative`}>
+      <div className={`${!receiverId ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-gray-50 dark:bg-zinc-950 relative transition-colors duration-200`}>
         {!receiverId ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
-            <MessageSquare className="w-16 h-16 text-gray-800 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-400">Your Messages</h3>
-            <p className="text-sm mt-2 text-gray-600">Select a conversation from the sidebar to start chatting</p>
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-zinc-950">
+            <div className="w-20 h-20 bg-primary-50 dark:bg-zinc-900 rounded-3xl flex items-center justify-center mb-6 text-primary-600 dark:text-primary-400 shadow-xs border border-primary-100 dark:border-zinc-800">
+              <MessageSquare className="w-10 h-10" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-gray-900 dark:text-zinc-100 mb-2">Your Messages</h3>
+            <p className="text-sm text-gray-500 dark:text-zinc-400 max-w-sm">Select a conversation from the sidebar to view matches and chat seamlessly.</p>
           </div>
         ) : loadingChat ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-zinc-950">
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-              <p className="text-gray-500 text-sm">Loading messages...</p>
+              <p className="text-gray-500 dark:text-zinc-400 text-sm font-medium">Loading messages...</p>
             </div>
           </div>
         ) : (
           <>
             {/* Chat Header */}
-            <div className="flex items-center gap-3 px-6 py-4 bg-gray-900 border-b border-gray-800 shadow-md">
+            <div className="flex items-center gap-3 px-6 py-4 bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-xs">
               <button
                 onClick={() => navigate('/chats')}
-                className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-800 text-gray-400 transition"
+                className="md:hidden p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-600 dark:text-zinc-300 transition"
               >
                 <ArrowLeft size={20} />
               </button>
 
-              <div className="relative">
+              <div className="relative shrink-0">
                 {receiver?.photoUrl ? (
-                  <img src={receiver.photoUrl} alt={receiver.name} className="w-10 h-10 rounded-full object-cover border border-gray-700" />
+                  <img src={receiver.photoUrl} alt={receiver.name} className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-zinc-700 shadow-xs" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-primary-900/50 flex items-center justify-center text-primary-400 font-bold text-sm border border-primary-800/50">
+                  <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-sm border border-primary-200 dark:border-primary-800/50">
                     {receiver?.name?.[0]?.toUpperCase() || '?'}
                   </div>
                 )}
                 {isReceiverOnline && (
-                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-gray-900 rounded-full"></div>
+                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full"></div>
                 )}
               </div>
 
               <div>
-                <p className="text-white font-semibold text-sm">
+                <p className="text-gray-900 dark:text-zinc-100 font-extrabold text-base leading-tight">
                   {receiver?.name || 'Loading...'}
                 </p>
-                <p className={`text-xs ${isReceiverOnline ? 'text-emerald-400' : 'text-gray-500'}`}>
+                <p className={`text-xs font-semibold ${isReceiverOnline ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-zinc-500'}`}>
                   {isReceiverOnline ? 'Online now' : 'Offline'}
                 </p>
               </div>
             </div>
 
             {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-zinc-950">
               <ChatWindow
                 messages={messages}
                 currentUserId={user._id}
@@ -301,7 +302,7 @@ const Chats = () => {
             </div>
 
             {/* Chat Input */}
-            <div className="bg-gray-900 p-2">
+            <div className="bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-800 p-3">
               <ChatInput onSend={sendMessage} />
             </div>
           </>
