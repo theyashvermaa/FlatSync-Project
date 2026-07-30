@@ -579,7 +579,7 @@ const FindFlat = () => {
                   <h4 className="font-extrabold text-gray-900 dark:text-zinc-100 text-sm">AI Match Compatibility</h4>
                 </div>
               </div>
-              <MatchScoreBadge listingOwnerId={selectedListing.owner?._id || selectedListing.owner} />
+              <MatchScoreBadge listingId={selectedListing._id} listingOwnerId={selectedListing.owner?._id || selectedListing.owner} />
             </div>
           )}
 
