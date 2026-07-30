@@ -640,14 +640,14 @@ const Home = ({ onRegisterClick }) => {
             </p>
 
             <p className="text-gray-600 dark:text-zinc-400 text-base leading-relaxed mb-8">
-              Built Using <span className="font-semibold text-gray-900 dark:text-zinc-200">React, Node.js, Express.js, MongoDB, Socket.io, Google Maps API,</span> And <span className="font-semibold text-gray-900 dark:text-zinc-200">Cloudinary</span>, FlatSync Offers Secure Authentication, Real-Time Messaging, Location-Based Property Search, And Image Uploads.
+              Built Using <span className="font-semibold text-gray-900 dark:text-zinc-200">React, Node.js, Express.js, MongoDB, Socket.io,</span> And <span className="font-semibold text-gray-900 dark:text-zinc-200">Cloudinary</span>, FlatSync Offers Secure Authentication, Real-Time Messaging, Location-Based Property Search, And Image Uploads.
             </p>
 
             {/* Tech Stack Pills */}
             <div className="pt-6 border-t border-gray-100 dark:border-zinc-800/80">
               <h4 className="text-xs uppercase tracking-wider font-bold text-gray-400 dark:text-zinc-500 mb-3">Powered By Modern Stack</h4>
               <div className="flex flex-wrap gap-2">
-                {['React.js', 'Node.js', 'Express.js', 'MongoDB', 'Socket.io', 'Google Maps API', 'Cloudinary'].map((tech, idx) => (
+                {['React.js', 'Node.js', 'Express.js', 'MongoDB', 'Socket.io', 'Cloudinary'].map((tech, idx) => (
                   <span key={idx} className="px-3 py-1 bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-zinc-200 text-xs font-semibold rounded-lg">
                     {tech}
                   </span>
