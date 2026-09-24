@@ -97,6 +97,3 @@ npm run dev     # starts frontend on http://localhost:5173
 - **Backend:** Node.js, Express.js
 - **Database:** MongoDB + Mongoose
 - **Auth:** JWT (JSON Web Tokens) + bcryptjs
-
-## Team
-4 members working on separate GitHub feature branches.
